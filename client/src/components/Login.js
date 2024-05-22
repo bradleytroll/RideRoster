@@ -1,55 +1,40 @@
 import React, { useState } from 'react';
 import { useMutation, gql } from '@apollo/client';
 
-const REGISTER_USER = gql`
-  mutation RegisterUser($username: String!, $email: String!, $password: String!) {
-    addUser(username: $username, email: $email, password: $password) {
-      id
-      username
-      email
-    }
+const LOGIN_USER = gql`
+  mutation LoginUser($email: String!, $password: String!) {
+    loginUser(email: $email, password: $password)
   }
 `;
 
-const Register = () => {
-  const [username, setUsername] = useState('');
+const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [registerUser] = useMutation(REGISTER_USER);
+  const [loginUser] = useMutation(LOGIN_USER);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      await registerUser({
+      const { data } = await loginUser({
         variables: {
-          username,
           email,
           password,
         },
       });
 
-      setUsername('');
+      localStorage.setItem('token', data.loginUser);
       setEmail('');
       setPassword('');
-      alert("User registered successfully!");
     } catch (err) {
       console.error(err);
-      alert("Error registering user!");
     }
   };
 
   return (
     <div>
-      <h3>Register</h3>
+      <h3>Login</h3>
       <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          required
-        />
         <input
           type="email"
           placeholder="Email"
@@ -64,10 +49,10 @@ const Register = () => {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <button type="submit">Register</button>
+        <button type="submit">Login</button>
       </form>
     </div>
   );
 };
 
-export default Register;
+export default Login;

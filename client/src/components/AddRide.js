@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation, gql } from '@apollo/client';
+import { jwtDecode } from 'jwt-decode';  // Use named import
 
 const ADD_RIDE = gql`
   mutation AddRide(
@@ -34,12 +35,23 @@ const AddRide = () => {
   const [dateRidden, setDateRidden] = useState('');
   const [rating, setRating] = useState(1);
   const [review, setReview] = useState('');
+  const [error, setError] = useState('');
   const [addRide] = useMutation(ADD_RIDE);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
 
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('User not authenticated');
+        return;
+      }
+
+      const decodedToken = jwtDecode(token);
+      const userId = decodedToken.id;
+
       await addRide({
         variables: {
           name,
@@ -47,8 +59,8 @@ const AddRide = () => {
           dateRidden,
           rating,
           review,
-          userId: "USER_ID_HERE" // Replace with the actual user ID
-        }
+          userId,
+        },
       });
 
       setName('');
@@ -56,14 +68,17 @@ const AddRide = () => {
       setDateRidden('');
       setRating(1);
       setReview('');
+      alert('Ride added successfully!');
     } catch (err) {
       console.error(err);
+      setError(err.message);
     }
   };
 
   return (
     <div>
       <h3>Add a Ride</h3>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
       <form onSubmit={handleSubmit}>
         <input
           type="text"
