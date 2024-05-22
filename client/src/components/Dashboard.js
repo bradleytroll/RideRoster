@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, gql } from '@apollo/client';
 import EditRideModal from './EditRideModal';
+import { format } from 'date-fns';  // Import date-fns
 
 const GET_USER_RIDES = gql`
   query GetUserRides($userId: ID!) {
@@ -80,7 +81,7 @@ const Dashboard = ({ userId }) => {
           <li key={id}>
             <h4>{name}</h4>
             <p>Park: {park}</p>
-            <p>Date: {new Date(dateRidden).toLocaleDateString()}</p>
+            <p>Date: {isNaN(new Date(dateRidden).getTime()) ? 'Invalid Date' : format(new Date(dateRidden), 'yyyy-MM-dd')}</p>  {/* Format the date */}
             <p>Rating: {rating}</p>
             <p>Review: {review}</p>
             <button onClick={() => setEditingRide({ id, name, park, dateRidden, rating, review })}>Edit</button>

@@ -4,6 +4,12 @@ const Ride = require('../models/Ride');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+// Helper function to validate date
+const isValidDate = (dateString) => {
+  const date = new Date(dateString);
+  return !isNaN(date.getTime());
+};
+
 const UserType = new GraphQLObjectType({
   name: 'User',
   fields: () => ({
@@ -102,6 +108,9 @@ const Mutation = new GraphQLObjectType({
         userId: { type: new GraphQLNonNull(GraphQLID) },
       },
       resolve(parent, args) {
+        if (!isValidDate(args.dateRidden)) {
+          throw new Error('Invalid date format');
+        }
         const ride = new Ride({
           name: args.name,
           park: args.park,
@@ -119,7 +128,7 @@ const Mutation = new GraphQLObjectType({
         id: { type: new GraphQLNonNull(GraphQLID) },
       },
       async resolve(parent, args) {
-        const ride = await Ride.findByIdAndRemove(args.id);
+        const ride = await Ride.findByIdAndDelete(args.id);
         if (!ride) {
           throw new Error('Ride not found');
         }
@@ -137,6 +146,9 @@ const Mutation = new GraphQLObjectType({
         review: { type: GraphQLString },
       },
       async resolve(parent, args) {
+        if (!isValidDate(args.dateRidden)) {
+          throw new Error('Invalid date format');
+        }
         const ride = await Ride.findById(args.id);
         if (!ride) {
           throw new Error('Ride not found');
@@ -147,6 +159,25 @@ const Mutation = new GraphQLObjectType({
         ride.rating = args.rating;
         ride.review = args.review;
         return ride.save();
+      }
+    },
+    loginUser: {
+      type: GraphQLString,
+      args: {
+        email: { type: new GraphQLNonNull(GraphQLString) },
+        password: { type: new GraphQLNonNull(GraphQLString) },
+      },
+      async resolve(parent, args) {
+        const user = await User.findOne({ email: args.email });
+        if (!user) {
+          throw new Error('User not found');
+        }
+        const isMatch = await bcrypt.compare(args.password, user.password);
+        if (!isMatch) {
+          throw new Error('Incorrect password');
+        }
+        const token = jwt.sign({ id: user.id }, 'your_jwt_secret', { expiresIn: '1h' });
+        return token;
       }
     }
   }

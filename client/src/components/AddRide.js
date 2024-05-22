@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation, gql } from '@apollo/client';
-import { jwtDecode } from 'jwt-decode';  // Use named import
+import { format } from 'date-fns';  // Import date-fns
 
 const ADD_RIDE = gql`
   mutation AddRide(
@@ -29,7 +29,7 @@ const ADD_RIDE = gql`
   }
 `;
 
-const AddRide = () => {
+const AddRide = ({ userId }) => {
   const [name, setName] = useState('');
   const [park, setPark] = useState('');
   const [dateRidden, setDateRidden] = useState('');
@@ -43,20 +43,16 @@ const AddRide = () => {
     setError('');
 
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setError('User not authenticated');
+      if (isNaN(new Date(dateRidden).getTime())) {
+        setError('Invalid date format');
         return;
       }
-
-      const decodedToken = jwtDecode(token);
-      const userId = decodedToken.id;
 
       await addRide({
         variables: {
           name,
           park,
-          dateRidden,
+          dateRidden: format(new Date(dateRidden), 'yyyy-MM-dd'),  // Ensure correct format
           rating,
           review,
           userId,
