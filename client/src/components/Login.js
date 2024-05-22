@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation, gql } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode';  // Correct import
+import { jwtDecode } from 'jwt-decode'; // Correct import statement
 
 const LOGIN_USER = gql`
   mutation LoginUser($email: String!, $password: String!) {
@@ -32,7 +32,7 @@ const Login = ({ setIsAuthenticated, setUserId }) => {
       const decodedToken = jwtDecode(data.loginUser);
       setUserId(decodedToken.id);
       setIsAuthenticated(true);
-      navigate('/dashboard');
+      navigate('/dashboard'); // Redirect to dashboard on successful login
     } catch (err) {
       console.error(err);
       setError(err.message);

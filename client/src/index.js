@@ -1,18 +1,36 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { ApolloProvider, ApolloClient, InMemoryCache } from '@apollo/client';
+import { ApolloProvider, ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
+import { setContext } from '@apollo/client/link/context';
 import App from './App';
+import ErrorBoundary from './components/ErrorBoundary';
+
+const httpLink = createHttpLink({
+  uri: 'http://localhost:4001/graphql',
+});
+
+const authLink = setContext((_, { headers }) => {
+  const token = localStorage.getItem('token');
+  return {
+    headers: {
+      ...headers,
+      authorization: token ? `Bearer ${token}` : '',
+    }
+  };
+});
 
 const client = new ApolloClient({
-  uri: 'http://localhost:4001/graphql', // Make sure this matches the port your backend is running on
+  link: authLink.concat(httpLink),
   cache: new InMemoryCache()
 });
 
 const container = document.getElementById('root');
-const root = createRoot(container); // Create a root.
+const root = createRoot(container);
 
 root.render(
   <ApolloProvider client={client}>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </ApolloProvider>
 );

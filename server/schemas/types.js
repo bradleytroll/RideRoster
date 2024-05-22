@@ -66,6 +66,12 @@ const RootQuery = new GraphQLObjectType({
         return Ride.find({});
       }
     },
+    recentlyRatedRides: {
+      type: new GraphQLList(RideType),
+      resolve(parent, args) {
+        return Ride.find({}).sort({ dateRidden: -1 }).limit(20);
+      }
+    },
   }
 });
 

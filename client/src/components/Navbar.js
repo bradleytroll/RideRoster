@@ -1,28 +1,25 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 const Navbar = ({ isAuthenticated, onLogout }) => {
+  const location = useLocation();
+  
   return (
     <nav>
-      <h2>RideRoster</h2>
       <ul>
-        {isAuthenticated ? (
+        {!isAuthenticated ? (
           <>
-            <li>
-              <Link to="/dashboard">Dashboard</Link>
-            </li>
-            <li>
-              <button onClick={onLogout}>Logout</button>
-            </li>
+            <li><Link to="/">Home</Link></li>
+            <li><Link to="/signup">Sign Up</Link></li>
+            <li><Link to="/login">Login</Link></li>
           </>
         ) : (
           <>
-            <li>
-              <Link to="/login">Login</Link>
-            </li>
-            <li>
-              <Link to="/signup">Sign Up</Link>
-            </li>
+            <li><Link to="/">Home</Link></li>
+            {location.pathname !== '/dashboard' && (
+              <li><Link to="/dashboard">Dashboard</Link></li>
+            )}
+            <li><button onClick={onLogout}>Logout</button></li>
           </>
         )}
       </ul>
