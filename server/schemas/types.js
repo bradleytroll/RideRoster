@@ -74,14 +74,21 @@ const Mutation = new GraphQLObjectType({
         password: { type: new GraphQLNonNull(GraphQLString) },
       },
       async resolve(parent, args) {
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(args.password, salt);
-        const user = new User({
-          username: args.username,
-          email: args.email,
-          password: hashedPassword,
-        });
-        return user.save();
+        try {
+          const salt = await bcrypt.genSalt(10);
+          const hashedPassword = await bcrypt.hash(args.password, salt);
+          const user = new User({
+            username: args.username,
+            email: args.email,
+            password: hashedPassword,
+          });
+          return await user.save();
+        } catch (err) {
+          if (err.code === 11000) {
+            throw new Error('Username or email already exists');
+          }
+          throw err;
+        }
       }
     },
     addRide: {
@@ -106,23 +113,40 @@ const Mutation = new GraphQLObjectType({
         return ride.save();
       }
     },
-    loginUser: {
-      type: GraphQLString,
+    deleteRide: {
+      type: RideType,
       args: {
-        email: { type: new GraphQLNonNull(GraphQLString) },
-        password: { type: new GraphQLNonNull(GraphQLString) },
+        id: { type: new GraphQLNonNull(GraphQLID) },
       },
       async resolve(parent, args) {
-        const user = await User.findOne({ email: args.email });
-        if (!user) {
-          throw new Error('User not found');
+        const ride = await Ride.findByIdAndRemove(args.id);
+        if (!ride) {
+          throw new Error('Ride not found');
         }
-        const isMatch = await bcrypt.compare(args.password, user.password);
-        if (!isMatch) {
-          throw new Error('Incorrect password');
+        return ride;
+      }
+    },
+    updateRide: {
+      type: RideType,
+      args: {
+        id: { type: new GraphQLNonNull(GraphQLID) },
+        name: { type: new GraphQLNonNull(GraphQLString) },
+        park: { type: new GraphQLNonNull(GraphQLString) },
+        dateRidden: { type: new GraphQLNonNull(GraphQLString) },
+        rating: { type: GraphQLInt },
+        review: { type: GraphQLString },
+      },
+      async resolve(parent, args) {
+        const ride = await Ride.findById(args.id);
+        if (!ride) {
+          throw new Error('Ride not found');
         }
-        const token = jwt.sign({ id: user.id }, 'your_jwt_secret', { expiresIn: '1h' });
-        return token;
+        ride.name = args.name;
+        ride.park = args.park;
+        ride.dateRidden = args.dateRidden;
+        ride.rating = args.rating;
+        ride.review = args.review;
+        return ride.save();
       }
     }
   }

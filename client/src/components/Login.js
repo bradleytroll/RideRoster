@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation, gql } from '@apollo/client';
+import { useNavigate } from 'react-router-dom';
+import { jwtDecode } from 'jwt-decode';
 
 const LOGIN_USER = gql`
   mutation LoginUser($email: String!, $password: String!) {
@@ -7,13 +9,16 @@ const LOGIN_USER = gql`
   }
 `;
 
-const Login = () => {
+const Login = ({ setIsAuthenticated, setUserId }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const [loginUser] = useMutation(LOGIN_USER);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
 
     try {
       const { data } = await loginUser({
@@ -24,16 +29,20 @@ const Login = () => {
       });
 
       localStorage.setItem('token', data.loginUser);
-      setEmail('');
-      setPassword('');
+      const decodedToken = jwtDecode(data.loginUser);
+      setUserId(decodedToken.id);
+      setIsAuthenticated(true);
+      navigate('/dashboard');
     } catch (err) {
       console.error(err);
+      setError(err.message);
     }
   };
 
   return (
     <div>
       <h3>Login</h3>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
       <form onSubmit={handleSubmit}>
         <input
           type="email"
